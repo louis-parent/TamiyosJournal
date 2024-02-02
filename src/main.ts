@@ -1,24 +1,34 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import "./styles/style.css"
+import "./components/set-selector";
+import Controller from "./utils/controller";
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
+  <h1>Tamiyos' Journal</h1>
+  
+  <div class="row spaced full-width bottom-margin-midrange">
+    <div class="column at-start right-margin-near">
+      <h2 class="no-margin">Card set :</h2>
+      <set-selector id="set"></set-selector>
     </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+    <div class="column at-start">
+      <h2 class="no-margin">Card number :</h2>
+      <input id="card" type="number" min="0" step="1" required />
+    </div>
+  </div>
+
+  <div class="row spaced full-width bottom-margin-midrange">
+    <button id="add">➕</button>
+    <button id="remove">➖</button>
+  </div>
+
+  <img id="preview" class="third-width-max" />
+`;
+
+setTimeout(() => {
+  Controller.mount({
+    set: document.querySelector("#set")!,
+    card: document.querySelector("#card")!,
+    preview: document.querySelector("#preview")!
+  });
+})
