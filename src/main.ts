@@ -15,6 +15,15 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <h2 class="no-margin">Card number :</h2>
       <input id="card" type="number" min="0" step="1" required />
     </div>
+
+    <div class="column at-start">
+      <h2 class="no-margin">Card language :</h2>
+      <select id="language" required>
+        <option value="en" selected>🇺🇸 English</option>
+        <option value="fr">🇫🇷 French</option>
+        <option value="ph">Phyrexian</option>
+      </select>
+    </div>
   </div>
 
   <div class="row spaced full-width bottom-margin-midrange">
@@ -29,6 +38,7 @@ setTimeout(() => {
   Controller.mount({
     set: document.querySelector("#set")!,
     card: document.querySelector("#card")!,
+    language: document.querySelector("#language")!,
     preview: document.querySelector("#preview")!
   });
 })

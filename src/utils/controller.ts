@@ -1,20 +1,25 @@
 import * as Scry from "scryfall-sdk";
 import SetSelector from "../components/set-selector";
+import notFound from "/not_found.jpg";
+import searching from "/searching.jpg";
 
 type ControllerOptions = {
     set: SetSelector,
     card: HTMLInputElement,
+    language: HTMLSelectElement,
     preview: HTMLImageElement
 };
 
 class Controller {
     setInput: SetSelector;
     collectorInput: HTMLInputElement;
+    languageSelector: HTMLSelectElement;
     preview: HTMLImageElement;
 
     constructor(options: ControllerOptions) {
         this.setInput = options.set;
         this.collectorInput = options.card;
+        this.languageSelector = options.language;
         this.preview = options.preview;
     }
 
@@ -26,10 +31,16 @@ class Controller {
         if(event.key === "Enter") {
             const setCode = this.setInput.value;
             const collectorNumber = parseInt(this.collectorInput.value);
+            const language = this.languageSelector.value;
             
             if(setCode.length > 0) {
                 if(collectorNumber > 0) {
-                    this.cardFetcher(setCode, collectorNumber);
+                    if(language.length > 0) {
+                        this.cardFetcherWithFallBack(setCode, collectorNumber, language);
+                    }
+                    else {
+                        this.languageSelector.reportValidity();
+                    }
                 }
                 else {
                     this.collectorInput.reportValidity();
@@ -41,12 +52,20 @@ class Controller {
         }
     }
 
-    cardFetcher(set: string, cardNumber: number) {
-        Scry.Cards.bySet(set, cardNumber).then(card => {
-            this.preview.src = card.card_faces[0].image_uris?.large || "";
-            this.collectorInput.focus();
-            this.collectorInput.select();
-        });
+    cardFetcherWithFallBack(set: string, cardNumber: number, language: string) {
+        this.cardFetcher(set, cardNumber, language)
+        .catch(() => this.cardFetcher(set, cardNumber, "en"))
+        .catch(() => this.cardFetcher(set, cardNumber, "ph"))
+        .catch(() => this.preview.src = notFound);
+    }
+
+    async cardFetcher(set: string, cardNumber: number, language: string) {
+        this.preview.src = searching;
+
+        const card = await Scry.Cards.bySet(set, cardNumber, language);
+        this.preview.src = card.card_faces[0].image_uris?.large || "";
+        this.collectorInput.focus();
+        this.collectorInput.select();
     }
 
     static mount(options: ControllerOptions): Controller {
