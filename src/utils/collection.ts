@@ -5,11 +5,11 @@ type Card = {
     isFoil: boolean
 };
 
-class Collection {
-    static readonly LOCAL_STORAGE_KEY = "collection";
+export default class Collection {
+    private static readonly LOCAL_STORAGE_KEY = "collection";
 
     // Map of card per language, per set code, per collector number, per foiling
-    cards: Map<string, Map<string, Map<number, { nonFoil: number, foil: number}>>>;
+    private cards: Map<string, Map<string, Map<number, { nonFoil: number, foil: number}>>>;
 
     public constructor() {
         this.cards = new Map();
@@ -114,5 +114,3 @@ class Collection {
         return collection;
     }
 }
-
-export default Collection;

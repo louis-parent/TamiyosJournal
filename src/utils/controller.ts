@@ -20,14 +20,14 @@ type Selection = {
     isFoil: boolean
 };
 
-class Controller {
-    collection: Collection;
-    setInput: SetSelector;
-    collectorInput: HTMLInputElement;
-    languageSelector: HTMLSelectElement;
-    preview: HTMLImageElement;
-    add: HTMLButtonElement;
-    remove: HTMLButtonElement;
+export default class Controller {
+    private collection: Collection;
+    private setInput: SetSelector;
+    private collectorInput: HTMLInputElement;
+    private languageSelector: HTMLSelectElement;
+    private preview: HTMLImageElement;
+    private add: HTMLButtonElement;
+    private remove: HTMLButtonElement;
 
     public constructor(options: ControllerOptions) {
         this.collection = Collection.fromLocalStorage();
@@ -139,5 +139,3 @@ class Controller {
         return fetcher;
     }
 }
-
-export default Controller;

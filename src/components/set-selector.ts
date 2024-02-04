@@ -1,10 +1,10 @@
-import Blocky from "./blocky";
+import { BlockyForm } from "./blocky";
 import * as Scry from "scryfall-sdk";
 
-class SetSelector extends Blocky {
-    selector: HTMLSelectElement;
+export default class SetSelector extends BlockyForm {
+    private selector: HTMLSelectElement;
 
-    constructor() {
+    public constructor() {
         super();
 
         this.selector = document.createElement("select");
@@ -31,7 +31,7 @@ class SetSelector extends Blocky {
         });
     }
 
-    attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
+    public attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
         if(name === SetSelector.requiredAttributeName) {
             this.selector.required = JSON.parse(newVal?.toLowerCase() || "false");
         }
@@ -40,40 +40,39 @@ class SetSelector extends Blocky {
         }
     }
 
-    checkValidity() : boolean {
+    public checkValidity() : boolean {
         return this.selector.checkValidity();
     }
 
-    reportValidity() : boolean {
+    public reportValidity() : boolean {
         return this.selector.reportValidity();
     }
 
-    setCustomValidity(error: string) {
+    public setCustomValidity(error: string) {
         this.selector.setCustomValidity(error);
     }
 
-    get value() : string {
+    public get value() : string {
         return this.selector.value;
     }
 
-    set value(value: string) {
+    public set value(value: string) {
         this.selector.value = value;
     }
 
-    get required() : boolean {
+    public get required() : boolean {
         return this.selector.required;
     }
 
-    set required(value: boolean) {
+    public set required(value: boolean) {
         this.selector.required = value;
     }
 
-    static readonly requiredAttributeName = "required";
-    static readonly valueAttributeName = "value";
-    static get observedAttributes(): string[] {
+    private static readonly requiredAttributeName = "required";
+    private static readonly valueAttributeName = "value";
+    public static get observedAttributes(): string[] {
         return [ SetSelector.requiredAttributeName, SetSelector.valueAttributeName ];
     }
 }
 
 customElements.define("set-selector", SetSelector);
-export default SetSelector;

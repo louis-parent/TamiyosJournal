@@ -1,20 +1,26 @@
-abstract class Blocky extends HTMLElement {
-    template: ShadowRoot;
-    scopedStyle: HTMLStyleElement;
+export abstract class Blocky extends HTMLElement {
+    protected template: ShadowRoot;
+    protected scopedStyle: HTMLStyleElement;
     
-    constructor() {
+    public constructor() {
         super();
+
         this.template = this.attachShadow({ mode: "open" });
+
         this.scopedStyle = document.createElement("style");
         this.template.appendChild(this.scopedStyle);
     }
 
-    connectedCallback() {}
-    disconnectedCallback() {}
-    adoptedCallback() {}
+    public connectedCallback() {}
+    public disconnectedCallback() {}
+    public adoptedCallback() {}
 
     // abstract static get observedAttributes(): string[];
-    abstract attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) : void;
+    public abstract attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) : void;
 }
 
-export default Blocky;
+export abstract class BlockyForm extends Blocky {
+    public abstract checkValidity() : boolean;
+    public abstract reportValidity() : boolean;
+    public abstract setCustomValidity(error: string) : void;
+}
