@@ -1,23 +1,25 @@
 type Card = {
-    language: string,
+    languageCode: string,
     setCode: string,
     collectorNumber: number,
     isFoil: boolean
 };
 
 class Collection {
+    static readonly LOCAL_STORAGE_KEY = "collection";
+
     // Map of card per language, per set code, per collector number, per foiling
     cards: Map<string, Map<string, Map<number, { nonFoil: number, foil: number}>>>;
 
-    constructor() {
+    public constructor() {
         this.cards = new Map();
     }
 
-    add(card: Card) {
-        let ofLanguage = this.cards.get(card.language);
+    public add(card: Card, amount: number = 1) {
+        let ofLanguage = this.cards.get(card.languageCode);
         if(ofLanguage === undefined) {
             ofLanguage = new Map();
-            this.cards.set(card.language, ofLanguage);
+            this.cards.set(card.languageCode, ofLanguage);
         }
 
         let ofSet = ofLanguage.get(card.setCode);
@@ -36,24 +38,80 @@ class Collection {
         }
 
         if(card.isFoil) {
-            ofCollectorNumber.foil++;
+            ofCollectorNumber.foil += amount;
         }
         else {
-            ofCollectorNumber.nonFoil++;
+            ofCollectorNumber.nonFoil += amount;
         }
+
+        this.sync();
     }
 
-    remove(card: Card) {
-        const counter = this.cards.get(card.language)?.get(card.setCode)?.get(card.collectorNumber);
+    public remove(card: Card, amount: number = 1) {
+        const counter = this.cards.get(card.languageCode)?.get(card.setCode)?.get(card.collectorNumber);
 
         if(counter !== undefined) {
             if(card.isFoil) {
-                counter.foil--;
+                counter.foil -= amount;
             }
             else {
-                counter.nonFoil--;
+                counter.nonFoil -= amount;
+            }
+
+            this.sync();
+        }
+    }
+
+    public sync() {
+        localStorage.setItem(Collection.LOCAL_STORAGE_KEY, this.stringify());
+    }
+
+    private stringify() : string {
+        const raw : any = {};
+
+        for(const languageCode of this.cards.keys()) {
+            if(raw[languageCode] === undefined) {
+                raw[languageCode] = {};
+            }
+            
+            for(const setCode of this.cards.get(languageCode)!.keys()) {
+                if(raw[languageCode][setCode] === undefined) {
+                    raw[languageCode][setCode] = {};
+                }
+
+                for(const collectorNumber of this.cards.get(languageCode)!.get(setCode)!.keys()) {
+                    raw[languageCode][setCode][collectorNumber] = this.cards.get(languageCode)!.get(setCode)!.get(collectorNumber);
+                }
             }
         }
+
+        return JSON.stringify(raw);
+    }
+
+    public static fromLocalStorage(): Collection {
+        const rawJSON = localStorage.getItem(Collection.LOCAL_STORAGE_KEY);
+        const collection = new Collection();
+
+        if(rawJSON !== null) {
+            const raw = JSON.parse(rawJSON);
+
+            for(const languageCode in raw) {
+                for(const setCode in raw[languageCode]) {
+                    for(const collectorNumber in raw[languageCode][setCode]) {
+                        const card = {
+                            languageCode: languageCode,
+                            setCode: setCode,
+                            collectorNumber: parseInt(collectorNumber)
+                        };
+
+                        collection.add({ ...card, isFoil: false }, raw[languageCode][setCode][collectorNumber].nonFoil);
+                        collection.add({ ...card, isFoil: true }, raw[languageCode][setCode][collectorNumber].foil);
+                    }
+                }
+            }
+        }
+
+        return collection;
     }
 }
 

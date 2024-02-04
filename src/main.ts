@@ -13,7 +13,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 
     <div class="column at-start">
       <h2 class="no-margin">Card number :</h2>
-      <input id="card" type="number" min="0" step="1" required />
+      <input id="card" type="number" min="1" step="1" required placeholder="Collector number" />
     </div>
 
     <div class="column at-start">
@@ -39,6 +39,8 @@ setTimeout(() => {
     set: document.querySelector("#set")!,
     card: document.querySelector("#card")!,
     language: document.querySelector("#language")!,
-    preview: document.querySelector("#preview")!
+    preview: document.querySelector("#preview")!,
+    add: document.querySelector("#add")!,
+    remove: document.querySelector("#remove")!
   });
 })
