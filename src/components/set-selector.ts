@@ -2,33 +2,14 @@ import { BlockyForm } from "./blocky";
 import * as Scry from "scryfall-sdk";
 
 export default class SetSelector extends BlockyForm {
-    private selector: HTMLSelectElement;
-
     public constructor() {
         super();
 
-        this.selector = document.createElement("select");
-        this.template.appendChild(this.selector);
-        this.selector.disabled = true;
-        
-        const empty = document.createElement("option");
-        empty.value = "";
-        empty.innerText = "Loading...";
-        empty.selected = true;
-        this.selector.appendChild(empty);
+        this.template.appendChild(this.createReferencedElement("select", SetSelector.selectorReferenceName, {
+            disabled: true
+        }));
 
-        Scry.Sets.all().then(sets => {
-            this.selector.innerHTML = "";
-
-            for(const set of sets.sort((left, right) => new Date(right.released_at || "").getTime() - new Date(left.released_at || "").getTime())) {
-                const option = document.createElement("option");
-                option.value = set.code;
-                option.innerHTML = `${set.code.toUpperCase()} - ${set.name}`;
-                this.selector.appendChild(option);
-            }
-
-            this.selector.disabled = false;
-        });
+        this.generateOptions();        
     }
 
     public attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
@@ -68,8 +49,35 @@ export default class SetSelector extends BlockyForm {
         this.selector.required = value;
     }
 
+    protected get selector() : HTMLSelectElement {
+        return this.reference<HTMLSelectElement>(SetSelector.selectorReferenceName)!;
+    }
+
+    private generateOptions() {
+        this.selector.appendChild(this.createElement("option", {
+            value: "",
+            selected: true,
+            innerText: "Loading..."
+        }));
+
+        Scry.Sets.all().then(sets => {
+            this.selector.innerHTML = "";
+
+            for(const set of sets.sort((left, right) => new Date(right.released_at || "").getTime() - new Date(left.released_at || "").getTime())) {
+                this.selector.appendChild(this.createElement("option", {
+                    value: set.code,
+                    innerHTML: `${set.code.toUpperCase()} - ${set.name}`
+                }));
+            }
+
+            this.selector.disabled = false;
+        });
+    }
+
+    private static readonly selectorReferenceName = "selector";
     private static readonly requiredAttributeName = "required";
     private static readonly valueAttributeName = "value";
+
     public static get observedAttributes(): string[] {
         return [ SetSelector.requiredAttributeName, SetSelector.valueAttributeName ];
     }

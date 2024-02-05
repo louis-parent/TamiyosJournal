@@ -1,7 +1,8 @@
 export abstract class Blocky extends HTMLElement {
     protected template: ShadowRoot;
     protected scopedStyle: HTMLStyleElement;
-    
+    private references: Map<string, HTMLElement>;
+
     public constructor() {
         super();
 
@@ -9,14 +10,53 @@ export abstract class Blocky extends HTMLElement {
 
         this.scopedStyle = document.createElement("style");
         this.template.appendChild(this.scopedStyle);
+
+        this.references = new Map();
     }
 
     public connectedCallback() {}
     public disconnectedCallback() {}
     public adoptedCallback() {}
 
-    // abstract static get observedAttributes(): string[];
+    public createReferencedElement<E extends HTMLElement>(tag: string, reference: string, defaults? : { [attribute: string]: any}) : E {
+        const element = this.createElement<E>(tag, defaults);
+        this.references.set(reference, element);
+        return element;
+    }
+
+    public createElement<E extends HTMLElement>(tag: string, defaults? : { [attribute: string]: any}) : E {
+        const element : E = document.createElement(tag) as E;
+
+        if(defaults != undefined) {
+            for(const key in defaults) {
+                if(key === "innerHTML") {
+                    element.innerHTML = defaults[key];
+                }
+                else if(key === "innerText") {
+                    element.innerText = defaults[key];
+                }
+                else {
+                    element.setAttribute(key, defaults[key])
+                }
+            }
+        }
+
+        return element;
+    }
+
+    public reference<E extends HTMLElement>(reference: string) : E | undefined {
+        const element = this.references.get(reference) as E;
+        if(element !== undefined) {
+            return element as E;
+        }
+        else {
+            return undefined;
+        }
+    }
+    
     public abstract attributeChangedCallback(name: string, oldVal: string | null, newVal: string | null) : void;
+
+    // public static get observedAttributes(): string[] { return []; }
 }
 
 export abstract class BlockyForm extends Blocky {
