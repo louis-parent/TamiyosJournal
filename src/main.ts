@@ -27,6 +27,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <input id="card" class="bottom-margin-far" type="number" min="1" step="1" required placeholder="Collector number" />
 
       <div class="card info">
+        Keyboard shortcut when in collector number field :
         <ul>
           <li><code>➕</code> : Add the selected card</li>
           <li><code>➖</code> : Remove the selected card</li>
