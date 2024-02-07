@@ -1,7 +1,7 @@
 import * as Scry from "scryfall-sdk";
 import SetSelector from "../components/set-selector";
-import notFound from "/not_found.jpg";
-import searching from "/searching.jpg";
+import notFound from "/not_found.png";
+import searching from "/searching.png";
 import Collection from "./collection";
 import Listenable from "./listenable";
 
