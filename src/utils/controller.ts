@@ -98,7 +98,7 @@ export default class Controller extends Listenable(Object) {
             const done = this.collection.add(selection);
             if(done) {
                 this.emitEvent("changed", this.collection);
-                this.launchPlusOneParticle();
+                this.launchPlusOneParticle(selection.isFoil);
             }
         }
     }
@@ -114,7 +114,7 @@ export default class Controller extends Listenable(Object) {
             const done = this.collection.remove(selection);
             if(done) {
                 this.emitEvent("changed", this.collection);
-                this.launchMinusOneParticle();
+                this.launchMinusOneParticle(selection.isFoil);
             }
         }
     }
@@ -172,17 +172,17 @@ export default class Controller extends Listenable(Object) {
         this.collectorInput.select();
     }
 
-    private launchPlusOneParticle() {
+    private launchPlusOneParticle(foil: boolean) {
         const element = document.createElement("span");
-        element.innerText = "+1";
+        element.innerHTML = `+1${foil ? "<sup>🌟</sup>" : ""}`;
         element.style.fontSize = "1.5rem";
         element.style.color = "#51A629";
         this.launchParticleRandomlyOverPreview(element);
     }
 
-    private launchMinusOneParticle() {
+    private launchMinusOneParticle(foil: boolean) {
         const element = document.createElement("span");
-        element.innerText = "-1";
+        element.innerHTML = `-1${foil ? "<sup>🌟</sup>" : ""}`;
         element.style.fontSize = "1.5rem";
         element.style.color = "#D93A2B";
         this.launchParticleRandomlyOverPreview(element);
