@@ -4,6 +4,7 @@ import notFound from "/not_found.png";
 import searching from "/searching.png";
 import Collection from "./collection";
 import Listenable from "./listenable";
+import { launchParticle } from "./particle";
 
 type ControllerOptions = {
     set: SetSelector,
@@ -93,8 +94,12 @@ export default class Controller extends Listenable(Object) {
         const selection = this.getValidSelection(event);
         if(selection != null) {
             this.selectCard(selection);
-            this.collection.add(selection);
-            this.emitEvent("changed", this.collection);
+
+            const done = this.collection.add(selection);
+            if(done) {
+                this.emitEvent("changed", this.collection);
+                this.launchPlusOneParticle();
+            }
         }
     }
 
@@ -105,8 +110,12 @@ export default class Controller extends Listenable(Object) {
         const selection = this.getValidSelection(event);
         if(selection != null) {
             this.selectCard(selection);
-            this.collection.remove(selection);
-            this.emitEvent("changed", this.collection);
+
+            const done = this.collection.remove(selection);
+            if(done) {
+                this.emitEvent("changed", this.collection);
+                this.launchMinusOneParticle();
+            }
         }
     }
     
@@ -161,6 +170,39 @@ export default class Controller extends Listenable(Object) {
         this.preview.src = card.card_faces[0].image_uris?.large || "";
         this.collectorInput.focus();
         this.collectorInput.select();
+    }
+
+    private launchPlusOneParticle() {
+        const element = document.createElement("span");
+        element.innerText = "+1";
+        element.style.fontSize = "1.5rem";
+        element.style.color = "#51A629";
+        this.launchParticleRandomlyOverPreview(element);
+    }
+
+    private launchMinusOneParticle() {
+        const element = document.createElement("span");
+        element.innerText = "-1";
+        element.style.fontSize = "1.5rem";
+        element.style.color = "#D93A2B";
+        this.launchParticleRandomlyOverPreview(element);
+    }
+
+    private launchParticleRandomlyOverPreview(element: HTMLElement) {
+        const previewRect = this.preview.getBoundingClientRect();
+        const lifetimeMs = 500;
+
+        const randomStart = {
+            x: previewRect.x + (previewRect.width * 0.90) + (previewRect.width * 0.10 * Math.random()),
+            y: previewRect.y + (previewRect.height * 0.10) + (previewRect.height * 0.10 * Math.random())
+        };
+
+        const randomVelocity = {
+            x: 0.5 + (0.5 * Math.random()),
+            y: -(1 + (0.5 * Math.random()))
+        }
+
+        launchParticle(element, randomStart, randomVelocity, lifetimeMs);
     }
 
     public static mount(options: ControllerOptions): Controller {

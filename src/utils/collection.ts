@@ -15,7 +15,7 @@ export default class Collection {
         this.cards = new Map();
     }
 
-    public add(card: Card, amount: number = 1) {
+    public add(card: Card, amount: number = 1) : boolean {
         let ofLanguage = this.cards.get(card.languageCode);
         if(ofLanguage === undefined) {
             ofLanguage = new Map();
@@ -44,29 +44,39 @@ export default class Collection {
             ofCollectorNumber.nonFoil += amount;
         }
 
-        this.sync();
+        this.save();
+        return true;
     }
 
-    public remove(card: Card, amount: number = 1) {
+    public remove(card: Card, amount: number = 1) : boolean {
         const counter = this.cards.get(card.languageCode)?.get(card.setCode)?.get(card.collectorNumber);
+        let modified = false;
 
         if(counter !== undefined) {
             if(card.isFoil) {
-                counter.foil -= amount;
+                if(counter.foil > 0) {
+                    counter.foil = Math.max(counter.foil - amount, 0);
+                    modified = true;
+                }
             }
             else {
-                counter.nonFoil -= amount;
+                if(counter.nonFoil > 0) {
+                    counter.nonFoil = Math.max(counter.nonFoil - amount, 0);
+                    modified = true;
+                }
             }
 
-            this.sync();
+            this.save();
         }
+
+        return modified;
     }
 
-    public sync() {
-        localStorage.setItem(Collection.LOCAL_STORAGE_KEY, this.stringify());
+    public async save() {
+        localStorage.setItem(Collection.LOCAL_STORAGE_KEY, await this.stringify());
     }
 
-    public asObject() : any {
+    public async asObject() : Promise<any> {
         const raw : any = {};
 
         for(const languageCode of this.cards.keys()) {
@@ -92,8 +102,8 @@ export default class Collection {
         return raw;
     }
 
-    private stringify() : string {
-        return JSON.stringify(this.asObject());
+    private async stringify() : Promise<string> {
+        return JSON.stringify(await this.asObject());
     }
 
     public static fromLocalStorage(): Collection {

@@ -49,9 +49,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <collection-tree id="tree" class="full-width"></collection-tree>
 `;
 
-setTimeout(() => {
+setTimeout(async () => {
   const tree : CollectionTree = document.querySelector("#tree")!;
-  tree.data = Collection.fromLocalStorage().asObject();
+  tree.data = await Collection.fromLocalStorage().asObject();
   
   const controller = Controller.mount({
     set: document.querySelector("#set")!,
@@ -62,7 +62,7 @@ setTimeout(() => {
     remove: document.querySelector("#remove")!
   });
   
-  controller.addEventListener("changed", collection => {
-    tree.data = collection.asObject();
+  controller.addEventListener("changed", async collection => {
+    tree.data = await collection.asObject();
   });
 });
