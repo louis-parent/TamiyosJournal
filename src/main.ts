@@ -19,9 +19,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <set-selector id="set" class="bottom-margin-near"></set-selector>
 
       <select id="language" class="bottom-margin-near" required>
-        <option value="en" selected>🇺🇸 English</option>
-        <option value="fr">🇫🇷 French</option>
-        <option value="ph">☠️ Phyrexian</option>
+        <option value="en" selected>English 🇺🇸</option>
+        <option value="fr">French 🇫🇷</option>
+        <option value="ph">Phyrexian ☠️</option>
       </select>
 
       <input id="card" class="bottom-margin-far" type="number" min="1" step="1" required placeholder="Collector number" />

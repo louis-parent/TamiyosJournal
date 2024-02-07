@@ -14,15 +14,30 @@ type ControllerOptions = {
     remove: HTMLButtonElement
 };
 
-type Selection = {
+type Card = {
     setCode: string,
     collectorNumber: number,
-    languageCode: string,
+    languageCode: string
+};
+
+type Selection = Card & {
     isFoil: boolean
 };
 
+function areCardsEqual(card1: Card | undefined | null, card2: Card | undefined | null) : boolean {
+    if((card1 === undefined || card1 === null) && (card2 === undefined || card2 === null)) {
+        return true
+    }
+    else if(card1 !== undefined && card1 !== null && card2 !== undefined && card2 !== null) {
+        return card1.setCode === card2.setCode && card1.collectorNumber === card2.collectorNumber && card1.languageCode === card2.languageCode;
+    }
+    else {
+        return false;
+    }
+}
+
 export default class Controller extends Listenable(Object) {
-    private collection: Collection;
+    private collection: Collection = Collection.fromLocalStorage();
     private setInput: SetSelector;
     private collectorInput: HTMLInputElement;
     private languageSelector: HTMLSelectElement;
@@ -30,10 +45,11 @@ export default class Controller extends Listenable(Object) {
     private add: HTMLButtonElement;
     private remove: HTMLButtonElement;
 
+    private lastSelectedCard: Card | undefined = undefined;
+
     public constructor(options: ControllerOptions) {
         super();
 
-        this.collection = Collection.fromLocalStorage();
         this.setInput = options.set;
         this.collectorInput = options.card;
         this.languageSelector = options.language;
@@ -66,7 +82,7 @@ export default class Controller extends Listenable(Object) {
         
         const selection = this.getValidSelection(event);
         if(selection != null) {
-            this.cardFetcherWithFallBack(selection);
+            this.selectCard(selection);
         }
     }
 
@@ -76,6 +92,7 @@ export default class Controller extends Listenable(Object) {
 
         const selection = this.getValidSelection(event);
         if(selection != null) {
+            this.selectCard(selection);
             this.collection.add(selection);
             this.emitEvent("changed", this.collection);
         }
@@ -87,6 +104,7 @@ export default class Controller extends Listenable(Object) {
 
         const selection = this.getValidSelection(event);
         if(selection != null) {
+            this.selectCard(selection);
             this.collection.remove(selection);
             this.emitEvent("changed", this.collection);
         }
@@ -122,14 +140,21 @@ export default class Controller extends Listenable(Object) {
         }
     }
 
-    private cardFetcherWithFallBack(selection: Selection) {
+    private selectCard(card: Card) {
+        if(!areCardsEqual(this.lastSelectedCard, card)) {
+            this.cardFetcherWithFallBack(card);
+            this.lastSelectedCard = card;
+        }
+    }
+
+    private cardFetcherWithFallBack(selection: Card) {
         this.cardFetcher(selection)
         .catch(() => this.cardFetcher({...selection, languageCode: "en"}))
         .catch(() => this.cardFetcher({...selection, languageCode: "ph"}))
         .catch(() => this.preview.src = notFound);
     }
 
-    private async cardFetcher(selection: Selection) {
+    private async cardFetcher(selection: Card) {
         this.preview.src = searching;
 
         const card = await Scry.Cards.bySet(selection.setCode, selection.collectorNumber, selection.languageCode);
