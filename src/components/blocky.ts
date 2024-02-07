@@ -1,17 +1,17 @@
 export abstract class Blocky extends HTMLElement {
     protected template: ShadowRoot;
-    protected scopedStyle: HTMLStyleElement;
     private references: Map<string, HTMLElement>;
 
     public constructor() {
         super();
 
         this.template = this.attachShadow({ mode: "open" });
-
-        this.scopedStyle = document.createElement("style");
-        this.template.appendChild(this.scopedStyle);
-
+        this.template.adoptedStyleSheets.push(new CSSStyleSheet());
         this.references = new Map();
+    }
+
+    public get scopedStyle() : CSSStyleSheet {
+        return this.template.adoptedStyleSheets[0];
     }
 
     public connectedCallback() {}
@@ -42,6 +42,10 @@ export abstract class Blocky extends HTMLElement {
         }
 
         return element;
+    }
+
+    public createText(text: string) : Text {
+        return document.createTextNode(text);
     }
 
     public reference<E extends HTMLElement>(reference: string) : E | undefined {

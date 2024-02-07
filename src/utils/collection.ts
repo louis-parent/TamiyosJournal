@@ -66,7 +66,7 @@ export default class Collection {
         localStorage.setItem(Collection.LOCAL_STORAGE_KEY, this.stringify());
     }
 
-    private stringify() : string {
+    public asObject() : any {
         const raw : any = {};
 
         for(const languageCode of this.cards.keys()) {
@@ -80,12 +80,20 @@ export default class Collection {
                 }
 
                 for(const collectorNumber of this.cards.get(languageCode)!.get(setCode)!.keys()) {
-                    raw[languageCode][setCode][collectorNumber] = this.cards.get(languageCode)!.get(setCode)!.get(collectorNumber);
+                    const card = this.cards.get(languageCode)!.get(setCode)!.get(collectorNumber);
+                    raw[languageCode][setCode][collectorNumber] = {
+                        nonFoil: card?.nonFoil || 0,
+                        foil: card?.foil || 0
+                    };
                 }
             }
         }
 
-        return JSON.stringify(raw);
+        return raw;
+    }
+
+    private stringify() : string {
+        return JSON.stringify(this.asObject());
     }
 
     public static fromLocalStorage(): Collection {

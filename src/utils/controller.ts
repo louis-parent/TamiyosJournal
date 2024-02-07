@@ -3,6 +3,7 @@ import SetSelector from "../components/set-selector";
 import notFound from "/not_found.jpg";
 import searching from "/searching.jpg";
 import Collection from "./collection";
+import Listenable from "./listenable";
 
 type ControllerOptions = {
     set: SetSelector,
@@ -20,7 +21,7 @@ type Selection = {
     isFoil: boolean
 };
 
-export default class Controller {
+export default class Controller extends Listenable(Object) {
     private collection: Collection;
     private setInput: SetSelector;
     private collectorInput: HTMLInputElement;
@@ -30,6 +31,8 @@ export default class Controller {
     private remove: HTMLButtonElement;
 
     public constructor(options: ControllerOptions) {
+        super();
+
         this.collection = Collection.fromLocalStorage();
         this.setInput = options.set;
         this.collectorInput = options.card;
@@ -74,6 +77,7 @@ export default class Controller {
         const selection = this.getValidSelection(event);
         if(selection != null) {
             this.collection.add(selection);
+            this.emitEvent("changed", this.collection);
         }
     }
 
@@ -84,6 +88,7 @@ export default class Controller {
         const selection = this.getValidSelection(event);
         if(selection != null) {
             this.collection.remove(selection);
+            this.emitEvent("changed", this.collection);
         }
     }
     

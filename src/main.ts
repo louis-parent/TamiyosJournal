@@ -1,6 +1,10 @@
 import "./styles/style.css"
 import "./components/set-selector";
+import "./components/collection-tree"
+
+import CollectionTree from "./components/collection-tree";
 import Controller from "./utils/controller";
+import Collection from "./utils/collection";
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <h1>Tamiyos' Journal</h1>
@@ -26,11 +30,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </div>
   </div>
 
-
+  <collection-tree id="tree" class="full-width"></collection-tree>
 `;
 
 setTimeout(() => {
-  Controller.mount({
+  const tree : CollectionTree = document.querySelector("#tree")!;
+  tree.data = Collection.fromLocalStorage().asObject();
+  
+  const controller = Controller.mount({
     set: document.querySelector("#set")!,
     card: document.querySelector("#card")!,
     language: document.querySelector("#language")!,
@@ -38,4 +45,9 @@ setTimeout(() => {
     add: document.querySelector("#add")!,
     remove: document.querySelector("#remove")!
   });
+  
+  controller.addEventListener("changed", collection => {
+    tree.data = collection.asObject();
+  });
+
 })
