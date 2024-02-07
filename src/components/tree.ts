@@ -3,6 +3,9 @@ import { Blocky } from "./blocky";
 export default abstract class Tree extends Blocky {
     private static readonly dataAttribute = "data";
     private static readonly expandedAttribute = "expanded";
+    private static readonly persistAttribute = "persist";
+
+    private openedBranches : Map<number, Set<string>> = new Map();
 
     public constructor() {
         super();
@@ -25,6 +28,11 @@ export default abstract class Tree extends Blocky {
         if(name === Tree.dataAttribute) {
             this.refresh();
         }
+        else if(name === Tree.expandedAttribute && this.expanded) {
+            for(const node of this.template.querySelectorAll(".node")) {
+                node.classList.remove("closed");
+            }
+        }
     }
 
     public get data() : any {
@@ -41,12 +49,14 @@ export default abstract class Tree extends Blocky {
 
     public set expanded(value: boolean) {
         this.setAttribute(Tree.expandedAttribute, JSON.stringify(value));
+    }
 
-        if(value) {
-            for(const node of this.template.querySelectorAll(".node")) {
-                node.classList.remove("closed");
-            }
-        }
+    public get persist() : boolean {
+        return JSON.parse(this.getAttribute(Tree.persistAttribute) || "true");
+    }
+
+    public set persist(value: boolean) {
+        this.setAttribute(Tree.persistAttribute, JSON.stringify(value));
     }
 
     public refresh() {
@@ -59,13 +69,15 @@ export default abstract class Tree extends Blocky {
 
         for(const label in data) {
             if(typeof data[label] === "object") {
+                const mustBeOpen = this.expanded || (this.persist && this.openedBranches.get(depth)?.has(label));
+
                 const node = this.createElement("div", {
-                    class: `node ${this.expanded ? "" : "closed"}`,
+                    class: `node ${mustBeOpen ? "" : "closed"}`,
                     style: `margin-left: ${depth}%`
                 });
                 
                 const heading = this.createHeading(label, depth);
-                heading.addEventListener("click", () => node.classList.toggle("closed"));
+                heading.addEventListener("click", () => this.toggleBranch(node, label, depth));
                 node.appendChild(heading); 
                 
                 this.createTree(node, data[label], depth+1);
@@ -78,6 +90,24 @@ export default abstract class Tree extends Blocky {
         }
 
         parent.appendChild(this.createLeafs(leafs, data, depth));
+    }
+
+    private toggleBranch(node: HTMLElement, label: string, depth: number) {
+        const isClosed = node.classList.toggle("closed");
+
+        let branchOfDepth = this.openedBranches.get(depth);
+        if(branchOfDepth === undefined) {
+            branchOfDepth = new Set<string>();
+            this.openedBranches.set(depth, branchOfDepth);
+        }
+
+        if(isClosed) {
+            branchOfDepth.delete(label);
+        }
+        else {
+            branchOfDepth.add(label);
+        }
+        
     }
 
     private createHeading(label: string, depth: number) : HTMLElement {
@@ -119,5 +149,5 @@ export default abstract class Tree extends Blocky {
     protected abstract createNode(label: string, level: number) : HTMLElement;
     protected abstract createLeaf(label: string, value: any, level: number) : HTMLElement;
 
-    public static get observedAttributes(): string[] { return [ Tree.dataAttribute, Tree.expandedAttribute ]; }
+    public static get observedAttributes(): string[] { return [ Tree.dataAttribute, Tree.expandedAttribute, Tree.persistAttribute ]; }
 }
