@@ -8,7 +8,7 @@
   src: url("/MatrixBold.ttf") format("truetype");
 }
 
-:root {
+body {
   font-family: "MatrixBold", Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
