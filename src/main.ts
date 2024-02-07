@@ -14,7 +14,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <span>Tamiyos' Journal</span>
   </h1>
   
-  <main class="row gapped full-width bottom-margin-midrange wrap">
+  <main class="row from-center wrap full-width bottom-margin-midrange">
     <aside class="column from-center padding-near">
       <set-selector id="set" class="bottom-margin-near"></set-selector>
 
