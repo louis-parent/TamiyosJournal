@@ -6,6 +6,7 @@ export default class SetSelector extends BlockyForm {
         super();
 
         this.template.appendChild(this.createReferencedElement("select", SetSelector.selectorReferenceName, {
+            style: "width: 100%",
             disabled: true
         }));
 

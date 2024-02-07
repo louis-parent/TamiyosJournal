@@ -6,10 +6,44 @@ export default class CollectionTree extends Tree {
     public constructor() {
         super();
 
-        this.scopedStyle.insertRule(".set-heading { display: flex; flex-direction: row; align-items: center; }");
-        this.scopedStyle.insertRule(".set-icon { margin-right: 0.5em; }");
-        this.scopedStyle.insertRule(".leaf-item:first-child::after { content: '/'; margin-left: 0.5em; margin-right: 0.5em; }");
-        this.scopedStyle.insertRule(".leaf { display: flex; flex-direction: row; }");
+        this.scopedStyle.insertRule(`
+            .set-heading {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .set-icon {
+                margin-right: 0.5em;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .leaf-item:first-child::after {
+                content: '/';
+                margin-left: 0.5em;
+                margin-right: 0.5em;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .leaf {
+                display: flex;
+                flex-direction: row;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .node-heading, .leaf {
+                margin-bottom: 0.5em;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .node-heading {
+                background: rgba(255, 255, 255, 0.05);
+                border: solid 1px rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 0.25em;
+            }
+        `);
     }
 
     protected createNode(label: string, level: number): HTMLElement {
