@@ -30,8 +30,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <ul>
           <li><code>➕</code> : Add the selected card</li>
           <li><code>➖</code> : Remove the selected card</li>
-          <li><code>⇧ Shift</code> + <code>➕</code> : Add the selected card</li>
-          <li><code>⇧ Shift</code> + <code>➖</code> : Remove the selected card</li>
+          <li><code>⇧ Shift</code> + <code>➕</code> : Add the selected card as foil</li>
+          <li><code>⇧ Shift</code> + <code>➖</code> : Remove the selected card as foil</li>
         </ul>
       </div>
     </aside>
