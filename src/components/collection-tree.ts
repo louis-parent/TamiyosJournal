@@ -62,8 +62,17 @@ export default class CollectionTree extends Tree {
     }
 
     private createLanguageNode(languageCode: string) : HTMLElement {
+        let icon;
+        
+        if(languageCode === "ph") {
+            icon = "☠️";
+        }
+        else {
+            icon = getFlagByCode(languageCode === "en" ? "us" : languageCode);
+        }
+
         return this.createElement("span", {
-            innerText: `${getFlagByCode(languageCode === "en" ? "us" : languageCode)} ${languageCode}`
+            innerText: `${icon} ${languageCode}`
         });
     }
 
