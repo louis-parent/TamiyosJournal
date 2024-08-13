@@ -27,8 +27,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       </div>
 
 		<select id="language" class="bottom-margin-near" required>
-			<option value="en" selected>English 🇺🇸</option>
-			<option value="fr">French 🇫🇷</option>
+			<option value="en">English 🇺🇸</option>
+			<option value="fr" selected>French 🇫🇷</option>
 			<option value="ph">Phyrexian ☠️</option>
 		</select>
 
