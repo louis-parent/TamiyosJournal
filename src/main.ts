@@ -16,23 +16,31 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   
   <main class="row from-center wrap full-width bottom-margin-midrange">
     <aside class="column from-center padding-near">
-      <set-selector id="set" class="bottom-margin-near"></set-selector>
+	  <button id="change-mode">Extension → Alphabetical</button>
 
-      <select id="language" class="bottom-margin-near" required>
-        <option value="en" selected>English 🇺🇸</option>
-        <option value="fr">French 🇫🇷</option>
-        <option value="ph">Phyrexian ☠️</option>
-      </select>
+	  <div class="mode" id="extension" style="display: flex;">
+		<set-selector id="set" class="bottom-margin-near"></set-selector>
+      </div>
+	  <div class="mode" id="alphabetical" style="display: none;">
+		<div>Start at:</div>
+		<input id="alphabeticalStart" class="bottom-margin-near" type="text" min="1" step="1"/>
+      </div>
 
-      <input id="card" class="bottom-margin-far" type="number" min="1" step="1" required placeholder="Collector number" />
+		<select id="language" class="bottom-margin-near" required>
+			<option value="en" selected>English 🇺🇸</option>
+			<option value="fr">French 🇫🇷</option>
+			<option value="ph">Phyrexian ☠️</option>
+		</select>
 
+		<input id="card" class="bottom-margin-far" type="text" required placeholder="Collector number" />
       <div class="card info">
         Keyboard shortcut when in collector number field :
         <ul>
-          <li><code>➕</code> : Add the selected card</li>
-          <li><code>➖</code> : Remove the selected card</li>
-          <li><code>⇧ Shift</code> + <code>➕</code> : Add the selected card as foil</li>
-          <li><code>⇧ Shift</code> + <code>➖</code> : Remove the selected card as foil</li>
+          <li><code>⏎ Enter</code> : Select a card</li>
+          <li><code>➕</code> : Select and add a card</li>
+          <li><code>➖</code> : Select and remove a card</li>
+          <li><code>⇧ Shift</code> + <code>➕</code> : Select and add a card as foil</li>
+          <li><code>⇧ Shift</code> + <code>➖</code> : Select and remove a card as foil</li>
         </ul>
       </div>
     </aside>
@@ -51,19 +59,21 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `;
 
 setTimeout(async () => {
-  const tree : CollectionTree = document.querySelector("#tree")!;
-  tree.data = await Collection.fromLocalStorage().asObject();
-  
-  const controller = Controller.mount({
-    set: document.querySelector("#set")!,
-    card: document.querySelector("#card")!,
-    language: document.querySelector("#language")!,
-    preview: document.querySelector("#preview")!,
-    add: document.querySelector("#add")!,
-    remove: document.querySelector("#remove")!
-  });
-  
-  controller.addEventListener("changed", async collection => {
-    tree.data = await collection.asObject();
-  });
+    const tree: CollectionTree = document.querySelector("#tree")!;
+    tree.data = await Collection.fromLocalStorage().asObject();
+
+    const controller = Controller.mount({
+        set: document.querySelector("#set")!,
+        card: document.querySelector("#card")!,
+        language: document.querySelector("#language")!,
+        preview: document.querySelector("#preview")!,
+        add: document.querySelector("#add")!,
+        remove: document.querySelector("#remove")!,
+        mode: document.querySelector("#change-mode")!,
+        alphabeticalStart: document.querySelector("#alphabeticalStart")!
+    });
+
+    controller.addEventListener("changed", async collection => {
+        tree.data = await collection.asObject();
+    });
 });

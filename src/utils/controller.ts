@@ -12,12 +12,14 @@ type ControllerOptions = {
     language: HTMLSelectElement,
     preview: HTMLImageElement,
     add: HTMLButtonElement,
-    remove: HTMLButtonElement
+    remove: HTMLButtonElement,
+    mode: HTMLButtonElement,
+    alphabeticalStart: HTMLInputElement
 };
 
 type Card = {
     setCode: string,
-    collectorNumber: number,
+    collectorNumber: string,
     languageCode: string
 };
 
@@ -25,11 +27,16 @@ type Selection = Card & {
     isFoil: boolean
 };
 
-function areCardsEqual(card1: Card | undefined | null, card2: Card | undefined | null) : boolean {
-    if((card1 === undefined || card1 === null) && (card2 === undefined || card2 === null)) {
+enum Mode {
+    Extension,
+    Alphabetical
+}
+
+function areCardsEqual(card1: Card | undefined | null, card2: Card | undefined | null): boolean {
+    if ((card1 === undefined || card1 === null) && (card2 === undefined || card2 === null)) {
         return true
     }
-    else if(card1 !== undefined && card1 !== null && card2 !== undefined && card2 !== null) {
+    else if (card1 !== undefined && card1 !== null && card2 !== undefined && card2 !== null) {
         return card1.setCode === card2.setCode && card1.collectorNumber === card2.collectorNumber && card1.languageCode === card2.languageCode;
     }
     else {
@@ -45,8 +52,11 @@ export default class Controller extends Listenable(Object) {
     private preview: HTMLImageElement;
     private add: HTMLButtonElement;
     private remove: HTMLButtonElement;
+    private mode: HTMLButtonElement;
+    private alphabeticalStart: HTMLInputElement;
 
     private lastSelectedCard: Card | undefined = undefined;
+    private currentMode: Mode;
 
     public constructor(options: ControllerOptions) {
         super();
@@ -57,22 +67,27 @@ export default class Controller extends Listenable(Object) {
         this.preview = options.preview;
         this.add = options.add;
         this.remove = options.remove;
+        this.mode = options.mode;
+        this.alphabeticalStart = options.alphabeticalStart;
+
+        this.currentMode = Mode.Extension;
     }
 
     public attach() {
         this.collectorInput.addEventListener("keypress", event => this.inputListener(event));
         this.add.addEventListener("click", event => this.addCardListener(event));
         this.remove.addEventListener("click", event => this.removeCardListener(event));
+        this.mode.addEventListener("click", _ => this.changeModeListener());
     }
 
     private inputListener(event: KeyboardEvent) {
-        if(event.key === "Enter") {
+        if (event.key === "Enter") {
             this.fetchCardListener(event);
         }
-        else if(event.key === "+") {
+        else if (event.key === "+") {
             this.addCardListener(event);
         }
-        else if(event.key === "-") {
+        else if (event.key === "-") {
             this.removeCardListener(event);
         }
     }
@@ -80,53 +95,86 @@ export default class Controller extends Listenable(Object) {
     private fetchCardListener(event: MouseEvent | KeyboardEvent) {
         event.preventDefault();
         event.stopPropagation();
-        
-        const selection = this.getValidSelection(event);
-        if(selection != null) {
-            this.selectCard(selection);
-        }
+
+        this.makeSelection(event, false);
     }
 
-    private addCardListener(event: MouseEvent | KeyboardEvent) {
+    private async addCardListener(event: MouseEvent | KeyboardEvent) {
         event.preventDefault();
         event.stopPropagation();
 
-        const selection = this.getValidSelection(event);
-        if(selection != null) {
-            this.selectCard(selection);
-
+        const selection = await this.makeSelection(event, true);
+        if (selection != null) {
             const done = this.collection.add(selection);
-            if(done) {
+            if (done) {
                 this.emitEvent("changed", this.collection);
                 this.launchPlusOneParticle(selection.isFoil);
             }
         }
     }
 
-    private removeCardListener(event: MouseEvent | KeyboardEvent) {
+    private async removeCardListener(event: MouseEvent | KeyboardEvent) {
         event.preventDefault();
         event.stopPropagation();
 
-        const selection = this.getValidSelection(event);
-        if(selection != null) {
-            this.selectCard(selection);
-
+        const selection = await this.makeSelection(event, true);
+        if (selection != null) {
             const done = this.collection.remove(selection);
-            if(done) {
+            if (done) {
                 this.emitEvent("changed", this.collection);
                 this.launchMinusOneParticle(selection.isFoil);
             }
         }
     }
-    
-    private getValidSelection(event: KeyboardEvent | MouseEvent) : Selection | null {
-        if(this.setInput.reportValidity()) {
+
+    private changeModeListener() {
+        const extension = document.getElementById("extension");
+        const alphabetical = document.getElementById("alphabetical");
+
+        if (extension && alphabetical) {
+            const display = extension?.style.display;
+
+            extension.style.display = alphabetical.style.display;
+            alphabetical.style.display = display;
+
+            const button = document.getElementById("change-mode");
+
+            if (button) {
+                if (this.currentMode == Mode.Extension) {
+                    this.currentMode = Mode.Alphabetical;
+                    button.innerText = "Alphabetical → Extension";
+                } else {
+                    this.currentMode = Mode.Extension;
+                    button.innerText = "Extension → Alphabetical";
+                }
+            }
+        }
+    }
+
+    private async makeSelection(event: KeyboardEvent | MouseEvent, addOrRemove: boolean): Promise<Selection | null> {
+        var selection = null;
+
+        if (this.currentMode == Mode.Extension) {
+            selection = this.getValidSelectionExtension(event);
+        } else {
+            selection = await this.getValidSelectionAlphabetical(event, addOrRemove);
+        }
+
+        if (selection != null) {
+            this.selectCard(selection);
+        }
+
+        return selection;
+    }
+
+    private getValidSelectionExtension(event: KeyboardEvent | MouseEvent): Selection | null {
+        if (this.setInput.reportValidity()) {
             const setCode = this.setInput.value;
 
-            if(this.collectorInput.reportValidity()) {
-                const collectorNumber = parseInt(this.collectorInput.value);
+            if (this.collectorInput.reportValidity()) {
+                const collectorNumber = this.collectorInput.value;
 
-                if(this.languageSelector.reportValidity()) {
+                if (this.languageSelector.reportValidity()) {
                     const languageCode = this.languageSelector.value;
 
                     return {
@@ -149,18 +197,89 @@ export default class Controller extends Listenable(Object) {
         }
     }
 
+    private async getValidSelectionAlphabetical(event: KeyboardEvent | MouseEvent, addOrRemove: boolean): Promise<Selection | null> {
+        const alphabeticalStart = this.alphabeticalStart.value;
+
+        if (this.collectorInput.reportValidity()) {
+            const collectorNumber = parseInt(this.collectorInput.value);
+
+            if (this.languageSelector.reportValidity()) {
+                const languageCode = this.languageSelector.value;
+
+                const card = await this.getNextCard(alphabeticalStart, collectorNumber, languageCode, addOrRemove);
+
+                if (card) {
+                    return { ...card, isFoil: event.shiftKey }
+                }
+                else {
+                    return null;
+                }
+            }
+            else {
+                return null;
+            }
+        }
+        else {
+            return null;
+        }
+    }
+
+    private async getNextCard(alphabeticalStart: string, collectorNumber: number, languageCode: string, addOrRemove: boolean): Promise<Card | null> {
+        const normalStart = this.normalize(alphabeticalStart);
+
+        const results = await Scry.Cards.search(`(game:paper) number:${collectorNumber} lang:${languageCode}`).waitForAll();
+        const filtered = results.filter(card => {
+            if (languageCode !== "en") {
+                return card.printed_name && (!card.printed_name || (!addOrRemove && this.normalize(card.printed_name) > normalStart) || (addOrRemove && this.normalize(card.printed_name) >= normalStart));
+            } else {
+                return this.normalize(card.name) > normalStart;
+            }
+        });
+
+        if (filtered.length > 0) {
+            var bestCard: Scry.Card = filtered[0];
+
+            if (languageCode !== "en") {
+                filtered.forEach(card => {
+                    if (bestCard.printed_name && card.printed_name && this.normalize(card.printed_name) < this.normalize(bestCard.printed_name)) {
+                        bestCard = card;
+                    }
+                });
+            }
+
+            const input = document.getElementById("alphabeticalStart") as HTMLInputElement;
+
+            if (input && !addOrRemove) {
+                if (languageCode !== "en" && bestCard.printed_name) {
+                    input.value = bestCard.printed_name;
+                } else {
+                    input.value = bestCard.name;
+                }
+            }
+
+            return { setCode: bestCard.set, collectorNumber: bestCard.collector_number, languageCode: languageCode };
+        }
+
+
+        return null;
+    }
+
     private selectCard(card: Card) {
-        if(!areCardsEqual(this.lastSelectedCard, card)) {
+        if (!areCardsEqual(this.lastSelectedCard, card)) {
             this.cardFetcherWithFallBack(card);
             this.lastSelectedCard = card;
         }
     }
 
+    private normalize(str: string): string {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
     private cardFetcherWithFallBack(selection: Card) {
         this.cardFetcher(selection)
-        .catch(() => this.cardFetcher({...selection, languageCode: "en"}))
-        .catch(() => this.cardFetcher({...selection, languageCode: "ph"}))
-        .catch(() => this.preview.src = notFound);
+            .catch(() => this.cardFetcher({ ...selection, languageCode: "en" }))
+            .catch(() => this.cardFetcher({ ...selection, languageCode: "ph" }))
+            .catch(() => this.preview.src = notFound);
     }
 
     private async cardFetcher(selection: Card) {
@@ -175,7 +294,7 @@ export default class Controller extends Listenable(Object) {
     private launchPlusOneParticle(foil: boolean) {
         const element = document.createElement("span");
         element.innerHTML = `+1${foil ? "<sup>🌟</sup>" : ""}`;
-        element.style.fontSize = "1.5rem";
+        element.style.fontSize = "3.5rem";
         element.style.color = "#51A629";
         this.launchParticleRandomlyOverPreview(element);
     }

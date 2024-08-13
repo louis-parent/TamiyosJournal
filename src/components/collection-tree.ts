@@ -47,24 +47,24 @@ export default class CollectionTree extends Tree {
     }
 
     protected createNode(label: string, level: number): HTMLElement {
-        if(level === 1) {
+        if (level === 1) {
             return this.createLanguageNode(label);
         }
-        else if(level === 2) {
+        else if (level === 2) {
             return this.createSetNode(label);
         }
-        else if(level === 3) {
-            return this.createCollectorNumberNode(parseInt(label));
+        else if (level === 3) {
+            return this.createCollectorNumberNode(label);
         }
         else {
             return this.createElement("span");
         }
     }
 
-    private createLanguageNode(languageCode: string) : HTMLElement {
+    private createLanguageNode(languageCode: string): HTMLElement {
         let icon;
-        
-        if(languageCode === "ph") {
+
+        if (languageCode === "ph") {
             icon = "☠️";
         }
         else {
@@ -76,7 +76,7 @@ export default class CollectionTree extends Tree {
         });
     }
 
-    private createSetNode(setCode: string) : HTMLElement {
+    private createSetNode(setCode: string): HTMLElement {
         const node = this.createElement("span", {
             class: "set-heading",
             innerText: setCode.toUpperCase()
@@ -96,7 +96,7 @@ export default class CollectionTree extends Tree {
         return node;
     }
 
-    private createCollectorNumberNode(collectorNumber: number) : HTMLElement {
+    private createCollectorNumberNode(collectorNumber: string): HTMLElement {
         return this.createElement("span", {
             innerText: `Card n°${collectorNumber}`
         });
