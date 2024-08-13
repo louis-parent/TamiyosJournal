@@ -14,25 +14,32 @@ type ControllerOptions = {
     add: HTMLButtonElement,
     remove: HTMLButtonElement,
     mode: HTMLButtonElement,
-    alphabeticalStart: HTMLInputElement
+    alphabeticalStart: HTMLInputElement,
+    export: HTMLButtonElement
 };
 
-type Card = {
+type MinInfo = {
     setCode: string,
     collectorNumber: string,
     languageCode: string
 };
 
-type Selection = Card & {
+type FoiledInfo = MinInfo & {
     isFoil: boolean
 };
+
+type Card = MinInfo & {
+    name: string
+};
+
+type FoiledCard = Card & FoiledInfo;
 
 enum Mode {
     Extension,
     Alphabetical
 }
 
-function areCardsEqual(card1: Card | undefined | null, card2: Card | undefined | null): boolean {
+function areCardsEqual(card1: MinInfo | undefined | null, card2: MinInfo | undefined | null): boolean {
     if ((card1 === undefined || card1 === null) && (card2 === undefined || card2 === null)) {
         return true
     }
@@ -54,8 +61,9 @@ export default class Controller extends Listenable(Object) {
     private remove: HTMLButtonElement;
     private mode: HTMLButtonElement;
     private alphabeticalStart: HTMLInputElement;
+    private export: HTMLButtonElement;
 
-    private lastSelectedCard: Card | undefined = undefined;
+    private lastSelectedCard: FoiledCard | undefined = undefined;
     private currentMode: Mode;
 
     public constructor(options: ControllerOptions) {
@@ -69,6 +77,7 @@ export default class Controller extends Listenable(Object) {
         this.remove = options.remove;
         this.mode = options.mode;
         this.alphabeticalStart = options.alphabeticalStart;
+        this.export = options.export;
 
         this.currentMode = Mode.Extension;
     }
@@ -78,6 +87,7 @@ export default class Controller extends Listenable(Object) {
         this.add.addEventListener("click", event => this.addCardListener(event));
         this.remove.addEventListener("click", event => this.removeCardListener(event));
         this.mode.addEventListener("click", _ => this.changeModeListener());
+        this.export.addEventListener("click", _ => this.exportListener());
     }
 
     private inputListener(event: KeyboardEvent) {
@@ -96,35 +106,33 @@ export default class Controller extends Listenable(Object) {
         event.preventDefault();
         event.stopPropagation();
 
-        this.makeSelection(event, false);
+        this.makeSelection(event, false, () => { });
     }
 
     private async addCardListener(event: MouseEvent | KeyboardEvent) {
         event.preventDefault();
         event.stopPropagation();
 
-        const selection = await this.makeSelection(event, true);
-        if (selection != null) {
+        this.makeSelection(event, true, selection => {
             const done = this.collection.add(selection);
             if (done) {
                 this.emitEvent("changed", this.collection);
                 this.launchPlusOneParticle(selection.isFoil);
             }
-        }
+        });
     }
 
     private async removeCardListener(event: MouseEvent | KeyboardEvent) {
         event.preventDefault();
         event.stopPropagation();
 
-        const selection = await this.makeSelection(event, true);
-        if (selection != null) {
+        this.makeSelection(event, true, selection => {
             const done = this.collection.remove(selection);
             if (done) {
                 this.emitEvent("changed", this.collection);
                 this.launchMinusOneParticle(selection.isFoil);
             }
-        }
+        });
     }
 
     private changeModeListener() {
@@ -151,7 +159,26 @@ export default class Controller extends Listenable(Object) {
         }
     }
 
-    private async makeSelection(event: KeyboardEvent | MouseEvent, addOrRemove: boolean): Promise<Selection | null> {
+    private async exportListener() {
+        const collection = await this.collection.asCSV();
+
+        const csvContent = collection
+            .map(row => row.map(field => `"${field}"`).join(","))
+            .join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "collection.csv");
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    private async makeSelection(event: KeyboardEvent | MouseEvent, addOrRemove: boolean, callback: (card: FoiledCard) => void) {
         var selection = null;
 
         if (this.currentMode == Mode.Extension) {
@@ -161,13 +188,11 @@ export default class Controller extends Listenable(Object) {
         }
 
         if (selection != null) {
-            this.selectCard(selection);
+            await this.selectCard(selection, callback);
         }
-
-        return selection;
     }
 
-    private getValidSelectionExtension(event: KeyboardEvent | MouseEvent): Selection | null {
+    private getValidSelectionExtension(event: KeyboardEvent | MouseEvent): FoiledInfo | null {
         if (this.setInput.reportValidity()) {
             const setCode = this.setInput.value;
 
@@ -184,20 +209,13 @@ export default class Controller extends Listenable(Object) {
                         isFoil: event.shiftKey
                     };
                 }
-                else {
-                    return null;
-                }
-            }
-            else {
-                return null;
             }
         }
-        else {
-            return null;
-        }
+
+        return null;
     }
 
-    private async getValidSelectionAlphabetical(event: KeyboardEvent | MouseEvent, addOrRemove: boolean): Promise<Selection | null> {
+    private async getValidSelectionAlphabetical(event: KeyboardEvent | MouseEvent, addOrRemove: boolean): Promise<FoiledInfo | null> {
         const alphabeticalStart = this.alphabeticalStart.value;
 
         if (this.collectorInput.reportValidity()) {
@@ -211,20 +229,13 @@ export default class Controller extends Listenable(Object) {
                 if (card) {
                     return { ...card, isFoil: event.shiftKey }
                 }
-                else {
-                    return null;
-                }
-            }
-            else {
-                return null;
             }
         }
-        else {
-            return null;
-        }
+
+        return null;
     }
 
-    private async getNextCard(alphabeticalStart: string, collectorNumber: number, languageCode: string, addOrRemove: boolean): Promise<Card | null> {
+    private async getNextCard(alphabeticalStart: string, collectorNumber: number, languageCode: string, addOrRemove: boolean): Promise<MinInfo | null> {
         const normalStart = this.normalize(alphabeticalStart);
 
         const results = await Scry.Cards.search(`(game:paper) number:${collectorNumber} lang:${languageCode}`).waitForAll();
@@ -264,31 +275,39 @@ export default class Controller extends Listenable(Object) {
         return null;
     }
 
-    private selectCard(card: Card) {
-        if (!areCardsEqual(this.lastSelectedCard, card)) {
-            this.cardFetcherWithFallBack(card);
-            this.lastSelectedCard = card;
-        }
-    }
-
     private normalize(str: string): string {
         return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     }
 
-    private cardFetcherWithFallBack(selection: Card) {
-        this.cardFetcher(selection)
+    private async selectCard(info: FoiledInfo, callback: (card: FoiledCard) => void) {
+        if (!areCardsEqual(this.lastSelectedCard, info)) {
+            const name = await this.cardFetcherWithFallBack(info);
+            const card = { ...info, name: name };
+
+            this.lastSelectedCard = card;
+        }
+
+        if (this.lastSelectedCard) {
+            callback({ ...this.lastSelectedCard, isFoil: info.isFoil });
+        }
+    }
+
+    private async cardFetcherWithFallBack(selection: MinInfo): Promise<string> {
+        return await this.cardFetcher(selection)
             .catch(() => this.cardFetcher({ ...selection, languageCode: "en" }))
             .catch(() => this.cardFetcher({ ...selection, languageCode: "ph" }))
             .catch(() => this.preview.src = notFound);
     }
 
-    private async cardFetcher(selection: Card) {
+    private async cardFetcher(selection: MinInfo): Promise<string> {
         this.preview.src = searching;
 
         const card = await Scry.Cards.bySet(selection.setCode, selection.collectorNumber, selection.languageCode);
         this.preview.src = card.card_faces[0].image_uris?.large || "";
         this.collectorInput.focus();
         this.collectorInput.select();
+
+        return card.name;
     }
 
     private launchPlusOneParticle(foil: boolean) {

@@ -19,8 +19,15 @@ export default class CollectionTree extends Tree {
             }
         `);
         this.scopedStyle.insertRule(`
-            .leaf-item:first-child::after {
+            .leaf-item:last-child::before {
                 content: '/';
+                margin-left: 0.5em;
+                margin-right: 0.5em;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .leaf-item:first-child::after {
+                content: '-';
                 margin-left: 0.5em;
                 margin-right: 0.5em;
             }
@@ -104,7 +111,7 @@ export default class CollectionTree extends Tree {
 
     protected createLeaf(label: string, value: any, _level: number): HTMLElement {
         return this.createElement("span", {
-            innerText: `${label === "foil" ? "🌟" : "🎴"} : ${value}`
+            innerText: label === "name" ? value : `${label === "foil" ? "🌟" : "🎴"} : ${value}`
         });
     }
 

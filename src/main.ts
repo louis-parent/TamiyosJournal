@@ -55,6 +55,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </section>
   </main>
 
+  <button id="export" class="bottom-margin-near">Export collection</button>
   <collection-tree id="tree" class="full-width"></collection-tree>
 `;
 
@@ -70,7 +71,8 @@ setTimeout(async () => {
         add: document.querySelector("#add")!,
         remove: document.querySelector("#remove")!,
         mode: document.querySelector("#change-mode")!,
-        alphabeticalStart: document.querySelector("#alphabeticalStart")!
+        alphabeticalStart: document.querySelector("#alphabeticalStart")!,
+        export: document.querySelector("#export")!
     });
 
     controller.addEventListener("changed", async collection => {

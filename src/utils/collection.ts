@@ -2,14 +2,15 @@ type Card = {
     languageCode: string,
     setCode: string,
     collectorNumber: string,
-    isFoil: boolean
+    isFoil: boolean,
+    name: string
 };
 
 export default class Collection {
     private static readonly LOCAL_STORAGE_KEY = "collection";
 
     // Map of card per language, per set code, per collector number, per foiling
-    private cards: Map<string, Map<string, Map<string, { nonFoil: number, foil: number }>>>;
+    private cards: Map<string, Map<string, Map<string, { nonFoil: number, foil: number, name: string }>>>;
 
     public constructor() {
         this.cards = new Map();
@@ -32,7 +33,8 @@ export default class Collection {
         if (ofCollectorNumber === undefined) {
             ofCollectorNumber = {
                 nonFoil: 0,
-                foil: 0
+                foil: 0,
+                name: card.name
             };
             ofSet.set(card.collectorNumber, ofCollectorNumber);
         }
@@ -92,6 +94,7 @@ export default class Collection {
                 for (const collectorNumber of this.cards.get(languageCode)!.get(setCode)!.keys()) {
                     const card = this.cards.get(languageCode)!.get(setCode)!.get(collectorNumber);
                     raw[languageCode][setCode][collectorNumber] = {
+                        name: card?.name,
                         nonFoil: card?.nonFoil || 0,
                         foil: card?.foil || 0
                     };
@@ -100,6 +103,33 @@ export default class Collection {
         }
 
         return raw;
+    }
+
+    public async asCSV(): Promise<string[][]> {
+        const result = [["Count", "Name", "Edition", "Language", "Foil", "Collector Number"]];
+        const collection = await this.asObject();
+
+        for (const languageCode in collection) {
+            const byLanguageCodes = collection[languageCode];
+
+            for (const setCode in byLanguageCodes) {
+                const bySetCodes = byLanguageCodes[setCode];
+
+                for (const collectorNumber in bySetCodes) {
+                    const byConstantNumbers = bySetCodes[collectorNumber];
+
+                    if (byConstantNumbers.nonFoil > 0) {
+                        result.push([byConstantNumbers.nonFoil, byConstantNumbers.name, setCode, languageCode, "", collectorNumber]);
+                    }
+
+                    if (byConstantNumbers.foil > 0) {
+                        result.push([byConstantNumbers.foil, byConstantNumbers.name, setCode, languageCode, "foil", collectorNumber]);
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     private async stringify(): Promise<string> {
@@ -119,11 +149,13 @@ export default class Collection {
                         const card = {
                             languageCode: languageCode,
                             setCode: setCode,
-                            collectorNumber: collectorNumber
+                            collectorNumber: collectorNumber,
                         };
 
-                        collection.add({ ...card, isFoil: false }, raw[languageCode][setCode][collectorNumber].nonFoil);
-                        collection.add({ ...card, isFoil: true }, raw[languageCode][setCode][collectorNumber].foil);
+                        const cardDetails = raw[languageCode][setCode][collectorNumber];
+
+                        collection.add({ ...card, isFoil: false, name: cardDetails.name }, cardDetails.nonFoil);
+                        collection.add({ ...card, isFoil: true, name: cardDetails.name }, cardDetails.foil);
                     }
                 }
             }
