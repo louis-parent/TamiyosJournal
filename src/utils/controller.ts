@@ -302,7 +302,7 @@ export default class Controller extends Listenable(Object) {
     private launchMinusOneParticle(foil: boolean) {
         const element = document.createElement("span");
         element.innerHTML = `-1${foil ? "<sup>🌟</sup>" : ""}`;
-        element.style.fontSize = "1.5rem";
+        element.style.fontSize = "3.5rem";
         element.style.color = "#D93A2B";
         this.launchParticleRandomlyOverPreview(element);
     }
