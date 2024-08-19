@@ -19,8 +19,15 @@ export default class CollectionTree extends Tree {
             }
         `);
         this.scopedStyle.insertRule(`
-            .leaf-item:first-child::after {
+            .leaf-item:last-child::before {
                 content: '/';
+                margin-left: 0.5em;
+                margin-right: 0.5em;
+            }
+        `);
+        this.scopedStyle.insertRule(`
+            .leaf-item:first-child::after {
+                content: '-';
                 margin-left: 0.5em;
                 margin-right: 0.5em;
             }
@@ -47,24 +54,24 @@ export default class CollectionTree extends Tree {
     }
 
     protected createNode(label: string, level: number): HTMLElement {
-        if(level === 1) {
+        if (level === 1) {
             return this.createLanguageNode(label);
         }
-        else if(level === 2) {
+        else if (level === 2) {
             return this.createSetNode(label);
         }
-        else if(level === 3) {
-            return this.createCollectorNumberNode(parseInt(label));
+        else if (level === 3) {
+            return this.createCollectorNumberNode(label);
         }
         else {
             return this.createElement("span");
         }
     }
 
-    private createLanguageNode(languageCode: string) : HTMLElement {
+    private createLanguageNode(languageCode: string): HTMLElement {
         let icon;
-        
-        if(languageCode === "ph") {
+
+        if (languageCode === "ph") {
             icon = "☠️";
         }
         else {
@@ -76,7 +83,7 @@ export default class CollectionTree extends Tree {
         });
     }
 
-    private createSetNode(setCode: string) : HTMLElement {
+    private createSetNode(setCode: string): HTMLElement {
         const node = this.createElement("span", {
             class: "set-heading",
             innerText: setCode.toUpperCase()
@@ -96,7 +103,7 @@ export default class CollectionTree extends Tree {
         return node;
     }
 
-    private createCollectorNumberNode(collectorNumber: number) : HTMLElement {
+    private createCollectorNumberNode(collectorNumber: string): HTMLElement {
         return this.createElement("span", {
             innerText: `Card n°${collectorNumber}`
         });
@@ -104,7 +111,7 @@ export default class CollectionTree extends Tree {
 
     protected createLeaf(label: string, value: any, _level: number): HTMLElement {
         return this.createElement("span", {
-            innerText: `${label === "foil" ? "🌟" : "🎴"} : ${value}`
+            innerText: label === "name" ? value : `${label === "foil" ? "🌟" : "🎴"} : ${value}`
         });
     }
 
