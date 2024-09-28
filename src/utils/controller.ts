@@ -35,6 +35,13 @@ type Card = MinInfo & {
 
 type FoiledCard = Card & FoiledInfo;
 
+type SimpleCard = {
+	n: string,
+	l: string,
+	c: string,
+	s: string,
+}
+
 enum Mode {
 	Extension,
 	Alphabetical
@@ -68,6 +75,8 @@ export default class Controller extends Listenable(Object) {
 	private lastSelectedCard: FoiledCard | undefined = undefined;
 	private currentMode: Mode;
 
+	private scryfallData: SimpleCard[];
+
 	public constructor(options: ControllerOptions) {
 		super();
 
@@ -83,6 +92,8 @@ export default class Controller extends Listenable(Object) {
 		this.import = options.import;
 
 		this.currentMode = Mode.Extension;
+
+		this.scryfallData =  [];
 	}
 
 	public attach() {
@@ -188,7 +199,14 @@ export default class Controller extends Listenable(Object) {
 		const response = await fetch(bulkDataUrl);
 		const data = await response.json();
 
-		console.log(data);
+		this.scryfallData = data;
+
+		const popup = document.getElementById('popup') as HTMLElement;
+
+		popup.style.display = 'block'; 
+		setTimeout(() => {
+			popup.style.display = 'none';
+		}, 2000);
 	}
 
 	private async makeSelection(event: KeyboardEvent | MouseEvent, addOrRemove: boolean, callback: (card: FoiledCard) => void) {
@@ -251,39 +269,29 @@ export default class Controller extends Listenable(Object) {
 	private async getNextCard(alphabeticalStart: string, collectorNumber: number, languageCode: string, addOrRemove: boolean): Promise<MinInfo | null> {
 		const normalStart = this.normalize(alphabeticalStart);
 
-		const results = await Scry.Cards.search(`(game:paper) number:${collectorNumber} lang:${languageCode}`).waitForAll();
-		const filtered = results.filter(card => {
-			if (languageCode !== "en") {
-				return card.printed_name && (!card.printed_name || (!addOrRemove && this.normalize(card.printed_name) > normalStart) || (addOrRemove && this.normalize(card.printed_name) >= normalStart));
-			} else {
-				return this.normalize(card.name) > normalStart;
-			}
+		if (this.scryfallData.length == 0) {
+			await this.importListener();
+		}
+
+		let filtered = this.scryfallData.filter(card => {
+			return card.c === collectorNumber + "" && card.l === languageCode;
 		});
+		
+		filtered.sort((a, b) => this.normalize(a.n).localeCompare(this.normalize(b.n)));
+
+		filtered = filtered.filter(card => (!addOrRemove && this.normalize(card.n) > normalStart) || (addOrRemove && this.normalize(card.n) >= normalStart));
 
 		if (filtered.length > 0) {
-			var bestCard: Scry.Card = filtered[0];
-
-			if (languageCode !== "en") {
-				filtered.forEach(card => {
-					if (bestCard.printed_name && card.printed_name && this.normalize(card.printed_name) < this.normalize(bestCard.printed_name)) {
-						bestCard = card;
-					}
-				});
-			}
+			var bestCard = filtered[0];
 
 			const input = document.getElementById("alphabeticalStart") as HTMLInputElement;
 
 			if (input && !addOrRemove) {
-				if (languageCode !== "en" && bestCard.printed_name) {
-					input.value = bestCard.printed_name;
-				} else {
-					input.value = bestCard.name;
-				}
+				input.value = bestCard.n;
 			}
 
-			return { setCode: bestCard.set, collectorNumber: bestCard.collector_number, languageCode: languageCode };
+			return { setCode: bestCard.s, collectorNumber: bestCard.c, languageCode: languageCode };
 		}
-
 
 		return null;
 	}

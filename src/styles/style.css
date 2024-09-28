@@ -156,3 +156,16 @@ code {
 	left: 0;
 	margin: 15px;
 }
+
+#popup {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	padding: 20px;
+	background-color: #fff;
+	border: 1px solid #000;
+	display: none;
+	z-index: 1000;
+	color: black;
+}

@@ -14,6 +14,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <span>Tamiyos' Journal</span>
   </h1>
 
+	<div id="popup">Loading bulk data complete</div>
+
 	<div id="data-menu">
 		<button id="import" class="column at-center">Import bulk data</button>
 	</div>
