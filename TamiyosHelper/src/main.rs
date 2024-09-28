@@ -84,7 +84,7 @@ fn read_json_file(file_path: &str) -> Vec<Card> {
                     .to_string(),
                 l: json_value["lang"].as_str().unwrap().to_string(),
                 c: json_value["collector_number"].as_str().unwrap().to_string(),
-                s: json_value["collector_number"].as_str().unwrap().to_string(),
+                s: json_value["set"].as_str().unwrap().to_string(),
             });
         }
     }
