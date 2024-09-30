@@ -13,6 +13,12 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <img src="${icon}" width="64" />
     <span>Tamiyos' Journal</span>
   </h1>
+
+	<div id="popup">Loading bulk data complete</div>
+
+	<div id="data-menu">
+		<button id="import" class="column at-center">Import bulk data</button>
+	</div>
   
   <main class="row from-center wrap full-width bottom-margin-midrange">
     <aside class="column from-center padding-near">
@@ -60,22 +66,23 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 `;
 
 setTimeout(async () => {
-    const tree: CollectionTree = document.querySelector("#tree")!;
-    tree.data = await Collection.fromLocalStorage().asObject();
+	const tree: CollectionTree = document.querySelector("#tree")!;
+	tree.data = await Collection.fromLocalStorage().asObject();
 
-    const controller = Controller.mount({
-        set: document.querySelector("#set")!,
-        card: document.querySelector("#card")!,
-        language: document.querySelector("#language")!,
-        preview: document.querySelector("#preview")!,
-        add: document.querySelector("#add")!,
-        remove: document.querySelector("#remove")!,
-        mode: document.querySelector("#change-mode")!,
-        alphabeticalStart: document.querySelector("#alphabeticalStart")!,
-        export: document.querySelector("#export")!
-    });
+	const controller = Controller.mount({
+		set: document.querySelector("#set")!,
+		card: document.querySelector("#card")!,
+		language: document.querySelector("#language")!,
+		preview: document.querySelector("#preview")!,
+		add: document.querySelector("#add")!,
+		remove: document.querySelector("#remove")!,
+		mode: document.querySelector("#change-mode")!,
+		alphabeticalStart: document.querySelector("#alphabeticalStart")!,
+		export: document.querySelector("#export")!,
+		import: document.querySelector("#import")!
+	});
 
-    controller.addEventListener("changed", async collection => {
-        tree.data = await collection.asObject();
-    });
+	controller.addEventListener("changed", async collection => {
+		tree.data = await collection.asObject();
+	});
 });

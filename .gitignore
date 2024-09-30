@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rust stuff
+TamiyosHelper/target/
+TamiyosHelper/Cargo.lock
