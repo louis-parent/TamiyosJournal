@@ -22,14 +22,18 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   
   <main class="row from-center wrap full-width bottom-margin-midrange">
     <aside class="column from-center padding-near">
-	  <button id="change-mode">Extension → Alphabetical</button>
+	  <button id="change-mode">To Alphabetical</button>
 
 	  <div class="mode" id="extension" style="display: flex;">
 		<set-selector id="set" class="bottom-margin-near"></set-selector>
       </div>
 	  <div class="mode" id="alphabetical" style="display: none;">
 		<div>Start at:</div>
-		<input id="alphabeticalStart" class="bottom-margin-near" type="text" min="1" step="1"/>
+		<input id="alphabeticalStart" class="bottom-margin-near" type="text"/>
+      </div>
+	  <div class="mode" id="explicit" style="display: none;">
+		<div>Name:</div>
+		<input id="explicitName" class="bottom-margin-near" type="text"/>
       </div>
 
 		<select id="language" class="bottom-margin-near" required>
@@ -78,6 +82,7 @@ setTimeout(async () => {
 		remove: document.querySelector("#remove")!,
 		mode: document.querySelector("#change-mode")!,
 		alphabeticalStart: document.querySelector("#alphabeticalStart")!,
+		explicitName: document.querySelector("#explicitName")!,
 		export: document.querySelector("#export")!,
 		import: document.querySelector("#import")!
 	});

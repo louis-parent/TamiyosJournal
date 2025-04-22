@@ -15,6 +15,7 @@ type ControllerOptions = {
 	remove: HTMLButtonElement,
 	mode: HTMLButtonElement,
 	alphabeticalStart: HTMLInputElement,
+	explicitName: HTMLInputElement,
 	export: HTMLButtonElement
 	import: HTMLButtonElement
 };
@@ -44,7 +45,8 @@ type SimpleCard = {
 
 enum Mode {
 	Extension,
-	Alphabetical
+	Alphabetical,
+	Explicit
 }
 
 function areCardsEqual(card1: MinInfo | undefined | null, card2: MinInfo | undefined | null): boolean {
@@ -69,6 +71,7 @@ export default class Controller extends Listenable(Object) {
 	private remove: HTMLButtonElement;
 	private mode: HTMLButtonElement;
 	private alphabeticalStart: HTMLInputElement;
+	private explicitName: HTMLInputElement;
 	private export: HTMLButtonElement;
 	private import: HTMLButtonElement;
 
@@ -88,16 +91,18 @@ export default class Controller extends Listenable(Object) {
 		this.remove = options.remove;
 		this.mode = options.mode;
 		this.alphabeticalStart = options.alphabeticalStart;
+		this.explicitName = options.explicitName;
 		this.export = options.export;
 		this.import = options.import;
 
 		this.currentMode = Mode.Extension;
 
-		this.scryfallData =  [];
+		this.scryfallData = [];
 	}
 
 	public attach() {
 		this.collectorInput.addEventListener("keypress", event => this.inputListener(event));
+		this.explicitName.addEventListener("keypress", event => this.inputListener(event));
 		this.add.addEventListener("click", event => this.addCardListener(event));
 		this.remove.addEventListener("click", event => this.removeCardListener(event));
 		this.mode.addEventListener("click", _ => this.changeModeListener());
@@ -153,23 +158,39 @@ export default class Controller extends Listenable(Object) {
 	private changeModeListener() {
 		const extension = document.getElementById("extension");
 		const alphabetical = document.getElementById("alphabetical");
+		const explicit = document.getElementById("explicit");
+		const button = document.getElementById("change-mode");
+		const collector = document.getElementById("card");
 
-		if (extension && alphabetical) {
-			const display = extension?.style.display;
+		if (extension && alphabetical && explicit && button && collector) {
+			switch (this.currentMode) {
+				case Mode.Extension:
+					alphabetical.style.display = extension.style.display;
+					extension.style.display = explicit.style.display;
 
-			extension.style.display = alphabetical.style.display;
-			alphabetical.style.display = display;
+					collector.style.display = alphabetical.style.display;
 
-			const button = document.getElementById("change-mode");
-
-			if (button) {
-				if (this.currentMode == Mode.Extension) {
 					this.currentMode = Mode.Alphabetical;
-					button.innerText = "Alphabetical → Extension";
-				} else {
+					button.innerText = "To Explicit";
+					break;
+				case Mode.Alphabetical:
+					explicit.style.display = alphabetical.style.display;
+					alphabetical.style.display = extension.style.display;
+
+					collector.style.display = "none";
+
+					this.currentMode = Mode.Explicit;
+					button.innerText = "To Extension";
+					break;
+				case Mode.Explicit:
+					extension.style.display = explicit.style.display;
+					explicit.style.display = alphabetical.style.display;
+
+					collector.style.display = extension.style.display;
+
 					this.currentMode = Mode.Extension;
-					button.innerText = "Extension → Alphabetical";
-				}
+					button.innerText = "To Alphabetical";
+					break;
 			}
 		}
 	}
@@ -194,7 +215,7 @@ export default class Controller extends Listenable(Object) {
 	}
 
 	private async importListener() {
-		const bulkDataUrl = 'http://lirmalys.ovh/TamiyosHelper/all_cards.json';
+		const bulkDataUrl = 'TamiyosHelper/all_cards.json';
 
 		const response = await fetch(bulkDataUrl);
 		const data = await response.json();
@@ -203,7 +224,7 @@ export default class Controller extends Listenable(Object) {
 
 		const popup = document.getElementById('popup') as HTMLElement;
 
-		popup.style.display = 'block'; 
+		popup.style.display = 'block';
 		setTimeout(() => {
 			popup.style.display = 'none';
 		}, 2000);
@@ -212,13 +233,19 @@ export default class Controller extends Listenable(Object) {
 	private async makeSelection(event: KeyboardEvent | MouseEvent, addOrRemove: boolean, callback: (card: FoiledCard) => void) {
 		var selection = null;
 
-		if (this.currentMode == Mode.Extension) {
-			selection = this.getValidSelectionExtension(event);
-		} else {
-			selection = await this.getValidSelectionAlphabetical(event, addOrRemove);
+		switch (this.currentMode) {
+			case Mode.Extension:
+				selection = this.getValidSelectionExtension(event);
+				break;
+			case Mode.Alphabetical:
+				selection = await this.getValidSelectionAlphabetical(event, addOrRemove);
+				break;
+			case Mode.Explicit:
+				selection = await this.getValidSelectionExplicit(event);
+				break;
 		}
 
-		if (selection != null) {
+		if (selection) {
 			await this.selectCard(selection, callback);
 		}
 	}
@@ -276,7 +303,7 @@ export default class Controller extends Listenable(Object) {
 		let filtered = this.scryfallData.filter(card => {
 			return card.c === collectorNumber + "" && card.l === languageCode;
 		});
-		
+
 		filtered.sort((a, b) => this.normalize(a.n).localeCompare(this.normalize(b.n)));
 
 		filtered = filtered.filter(card => (!addOrRemove && this.normalize(card.n) > normalStart) || (addOrRemove && this.normalize(card.n) >= normalStart));
@@ -297,7 +324,45 @@ export default class Controller extends Listenable(Object) {
 	}
 
 	private normalize(str: string): string {
-		return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+		return str.normalize('NFD').replace(/[^a-zA-Z]/g, '').toLowerCase();
+	}
+
+	private async getValidSelectionExplicit(event: KeyboardEvent | MouseEvent): Promise<FoiledInfo | null> {
+		const explicitName = this.explicitName.value;
+
+		if (this.languageSelector.reportValidity()) {
+			const languageCode = this.languageSelector.value;
+
+			const card = await this.getSpecificCard(explicitName, languageCode);
+
+			if (card) {
+				return { ...card, isFoil: event.shiftKey }
+			}
+		}
+
+		return null;
+	}
+
+	private async getSpecificCard(name: string, languageCode: string): Promise<MinInfo | null> {
+		if (this.scryfallData.length == 0) {
+			await this.importListener();
+		}
+
+		let filtered = this.scryfallData.filter(card => {
+			return this.normalize(card.n).includes(this.normalize(name)) && card.l === languageCode;
+		});
+
+		console.log(filtered);
+
+		filtered.sort((a, b) => this.normalize(a.n).localeCompare(this.normalize(b.n)));
+
+		if (filtered.length > 0) {
+			var bestCard = filtered[0];
+
+			return { setCode: bestCard.s, collectorNumber: bestCard.c, languageCode: languageCode };
+		}
+
+		return null;
 	}
 
 	private async selectCard(info: FoiledInfo, callback: (card: FoiledCard) => void) {
