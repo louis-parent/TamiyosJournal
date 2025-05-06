@@ -88,8 +88,9 @@ export default class CollectionTree extends Tree {
             class: "set-heading",
             innerText: setCode.toUpperCase()
         });
-
+        /*
         Scry.Sets.byCode(setCode).then(set => {
+            console.log(set);
             node.innerHTML = "";
             node.appendChild(this.createElement("img", {
                 class: "set-icon",
@@ -99,7 +100,7 @@ export default class CollectionTree extends Tree {
             }));
             node.appendChild(this.createText(set.name));
         });
-
+        */
         return node;
     }
 
