@@ -1,4 +1,4 @@
-import * as Scry from "scryfall-sdk";
+import * as Scryfall from "../utils/scryfall"
 import { getFlagByCode } from "../utils/language";
 import Tree from "./tree";
 
@@ -88,19 +88,20 @@ export default class CollectionTree extends Tree {
             class: "set-heading",
             innerText: setCode.toUpperCase()
         });
-        /*
-        Scry.Sets.byCode(setCode).then(set => {
-            console.log(set);
-            node.innerHTML = "";
-            node.appendChild(this.createElement("img", {
-                class: "set-icon",
-                width: 24,
-                height: 24,
-                src: set.icon_svg_uri
-            }));
-            node.appendChild(this.createText(set.name));
+        
+        Scryfall.Set.byCode(setCode).then(set => {
+            if(set !== undefined) {
+                node.innerHTML = "";
+                node.appendChild(this.createElement("img", {
+                    class: "set-icon",
+                    width: 24,
+                    height: 24,
+                    src: set.iconURI
+                }));
+                node.appendChild(this.createText(set.name));
+            }
         });
-        */
+        
         return node;
     }
 

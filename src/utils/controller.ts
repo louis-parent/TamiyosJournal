@@ -1,10 +1,10 @@
-import * as Scry from "scryfall-sdk";
 import SetSelector from "../components/set-selector";
 import notFound from "/not_found.png";
 import searching from "/searching.png";
 import Collection from "./collection";
 import Listenable from "./listenable";
 import { launchParticle } from "./particle";
+import * as Scryfall from "../utils/scryfall";
 
 type ControllerOptions = {
 	set: SetSelector,
@@ -387,8 +387,9 @@ export default class Controller extends Listenable(Object) {
 	private async cardFetcher(selection: MinInfo): Promise<string> {
 		this.preview.src = searching;
 
-		const card = await Scry.Cards.bySet(selection.setCode, selection.collectorNumber, selection.languageCode);
-		this.preview.src = card.card_faces[0].image_uris?.large || "";
+		const card = await Scryfall.Card.byNumber(selection.setCode, selection.collectorNumber, selection.languageCode as Scryfall.LanguageCode);
+		// const card = await Scry.Cards.bySet(selection.setCode, selection.collectorNumber, selection.languageCode);
+		this.preview.src = card.faces[0].image || "";
 		this.collectorInput.focus();
 		this.collectorInput.select();
 

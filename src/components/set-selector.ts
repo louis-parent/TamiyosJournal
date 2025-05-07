@@ -1,5 +1,5 @@
 import { BlockyForm } from "./blocky";
-import * as Scry from "scryfall-sdk";
+import * as Scryfall from "../utils/scryfall"
 
 export default class SetSelector extends BlockyForm {
     public constructor() {
@@ -61,10 +61,10 @@ export default class SetSelector extends BlockyForm {
             innerText: "Loading..."
         }));
 
-        Scry.Sets.all().then(sets => {
+        Scryfall.Set.all().then(sets => {
             this.selector.innerHTML = "";
 
-            for(const set of sets.sort((left, right) => new Date(right.released_at || "").getTime() - new Date(left.released_at || "").getTime())) {
+            for(const set of sets.sort((left, right) => new Date(right.realeasedAt || "").getTime() - new Date(left.realeasedAt || "").getTime())) {
                 this.selector.appendChild(this.createElement("option", {
                     value: set.code,
                     innerHTML: `${set.code.toUpperCase()} - ${set.name}`
