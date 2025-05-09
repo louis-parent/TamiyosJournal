@@ -79,7 +79,7 @@ export class Set {
 		this.id = id;
 		this.code = code;
 		this.name = name;
-		this.type= type;
+		this.type = type;
 		this.realeasedAt = releasedAt;
 		this.block = block;
 		this.cardCount = cardCount;
@@ -90,11 +90,11 @@ export class Set {
 	public static async byCode(code: string): Promise<Set> {
 		const response = await fetch(`${SCRYFALL_BASE_URL}/sets/${code}`);
 
-		if(response.ok) {
+		if (response.ok) {
 			const json = await response.json();
 			const set = Set.fromJSON(json);
 
-			if(set !== undefined) {
+			if (set !== undefined) {
 				return set;
 			}
 			else {
@@ -110,9 +110,9 @@ export class Set {
 		const sets = new Array();
 
 		const response = await fetch(`${SCRYFALL_BASE_URL}/sets`);
-		if(response.ok) {
+		if (response.ok) {
 			const json = await response.json();
-			for(const item of json.data) {
+			for (const item of json.data) {
 				sets.push(Set.fromJSON(item))
 			}
 		}
@@ -162,17 +162,17 @@ export class Card {
 
 	public static async byNumber(setCode: string, collectorNumber: string, language?: LanguageCode): Promise<Card> {
 		let url = `${SCRYFALL_BASE_URL}/cards/${setCode}/${collectorNumber}`;
-		if(language !== undefined) {
+		if (language !== undefined) {
 			url += `/${language}`
 		}
 
 		const response = await fetch(url);
 
-		if(response.ok) {
+		if (response.ok) {
 			const json = await response.json();
 			const card = Card.fromJSON(json);
-		
-			if(card !== undefined) {
+
+			if (card !== undefined) {
 				return card;
 			}
 			else {
@@ -189,7 +189,7 @@ export class Card {
 		const json = await response.json();
 		const card = Card.fromJSON(json);
 
-		if(card !== undefined) {
+		if (card !== undefined) {
 			return card;
 		}
 		else {
@@ -200,13 +200,22 @@ export class Card {
 	private static fromJSON(json: any): Card | undefined {
 		const faces = new Array();
 
-		if(json.card_faces !== undefined) {
-			for(const face of json.card_faces) {
-				faces.push(new CardFace(face.cost, face.name, face.image_uris.png, face.colors, face.power, face.toughness, face.loyalty))
+		let image = undefined;
+		if (json.image_uris !== undefined) {
+			image = json.image_uris.png;
+		}
+
+		if (json.card_faces !== undefined) {
+			for (const face of json.card_faces) {
+				if (face.image_uris !== undefined) {
+					image = face.image_uris.png;
+				}
+
+				faces.push(new CardFace(face.mana_cost, face.name, image, face.colors, face.power, face.toughness, face.loyalty))
 			}
 		}
 		else {
-			faces.push(new CardFace(json.cost, json.name, json.image_uris.png, json.colors, json.power, json.toughness, json.loyalty))
+			faces.push(new CardFace(json.mana_cost, json.name, json.image_uris.png, json.colors, json.power, json.toughness, json.loyalty))
 		}
 
 		return new Card(json.id, json.set, json.collector_number, json.name, json.lang, json.type_line, json.oracle_text ?? "", json.rarity, json.color_identity, json.keywords, json.artist, new Date(json.released_at), ...faces);

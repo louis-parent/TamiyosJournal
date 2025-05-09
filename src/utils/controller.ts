@@ -215,7 +215,7 @@ export default class Controller extends Listenable(Object) {
 	}
 
 	private async importListener() {
-	  const bulkDataUrl = 'https://lirmalys.ovh/TamiyosHelper/all_cards.json';
+		const bulkDataUrl = 'https://lirmalys.ovh/TamiyosHelper/all_cards.json';
 		const response = await fetch(bulkDataUrl);
 		const data = await response.json();
 
