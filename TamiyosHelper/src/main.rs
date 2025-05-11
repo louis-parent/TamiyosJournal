@@ -80,7 +80,16 @@ fn read_json_file(file_path: &str) -> Vec<Card> {
             all_cards.push(Card {
                 n: json_value["printed_name"]
                     .as_str()
-                    .unwrap_or(name)
+                    .unwrap_or_else(|| match json_value["card_faces"].as_array() {
+                        Some(array) => match array[0].as_object() {
+                            Some(object) => match &object.get("printed_name") {
+                                Some(printed_name) => printed_name.as_str().unwrap_or(name),
+                                None => name,
+                            },
+                            None => name,
+                        },
+                        None => name,
+                    })
                     .to_string(),
                 l: json_value["lang"].as_str().unwrap().to_string(),
                 c: json_value["collector_number"].as_str().unwrap().to_string(),
