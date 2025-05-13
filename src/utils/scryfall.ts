@@ -72,7 +72,7 @@ export class Set {
 	readonly realeasedAt?: Date;
 	readonly block?: string;
 	readonly cardCount: number;
-	readonly iconURI: string
+	iconURI: string
 	readonly digitalOnly: boolean;
 
 	public constructor(id: string, code: string, name: string, type: SetType, cardCount: number, iconURI: string, digitalOnly: boolean, releasedAt?: Date, block?: string) {
@@ -87,22 +87,43 @@ export class Set {
 		this.digitalOnly = digitalOnly;
 	}
 
+	private async resolveIcon(): Promise<void> {
+		const response = await fetch(this.iconURI);
+		const blob = await response.blob();
+		const reader = new FileReader();
+
+		await new Promise((success, error) => {
+			reader.onload = success;
+			reader.onerror = error;
+			reader.readAsDataURL(blob);
+		})
+
+		this.iconURI = reader.result!.toString();
+	}
+
 	public static async byCode(code: string): Promise<Set> {
-		const response = await fetch(`${SCRYFALL_BASE_URL}/sets/${code}`);
-
-		if (response.ok) {
-			const json = await response.json();
-			const set = Set.fromJSON(json);
-
-			if (set !== undefined) {
-				return set;
-			}
-			else {
-				throw new Error("Failed to fetch requested set");
-			}
+		if(localStorage.getItem(code) !== null) {
+			return JSON.parse(localStorage.getItem(code)!);
 		}
 		else {
-			throw new Error("The requested set doesn't exist");
+			const response = await fetch(`${SCRYFALL_BASE_URL}/sets/${code}`);
+	
+			if (response.ok) {
+				const json = await response.json();
+				const set = Set.fromJSON(json);
+	
+				if (set !== undefined) {
+					await set.resolveIcon();
+					localStorage.setItem(code, JSON.stringify(set));
+					return set;
+				}
+				else {
+					throw new Error("Failed to fetch requested set");
+				}
+			}
+			else {
+				throw new Error("The requested set doesn't exist");
+			}
 		}
 	}
 
